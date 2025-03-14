@@ -8,6 +8,10 @@ import com.opencsv.CSVWriter;
 import com.opencsv.bean.ColumnPositionMappingStrategy;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.w3c.dom.*;
 import org.xml.sax.SAXException;
 
@@ -18,10 +22,7 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -45,7 +46,6 @@ public class Main {
         String fileName = "data.csv";
         List<Employee> list = parseCSV(columnMapping, fileName);
         String json = listToJson(list);
-        System.out.println(json);
         writeString(json, "data.json");
 
 //********* задача 2 ***********//
@@ -70,10 +70,17 @@ public class Main {
         Transformer transformer = transformerFactory.newTransformer();
         transformer.transform(domSource, streamResult);
 
-        List<Employee> newlist = parseXML("data.xml");
-        String json2 = listToJson(newlist);
-        System.out.println(json2);
+        List<Employee> list2 = parseXML("data.xml");
+        String json2 = listToJson(list2);
         writeString(json2, "data2.json");
+
+        // задача 3 //
+
+        String json3 = readString("data.json");
+        List<Employee> list3 = jsonToList(json3);
+        for (Employee e: list3){
+            System.out.println(e.toString());
+        }
     }
 
     public static List<Employee> parseCSV(String[] columnMapping, String fileName) {
@@ -161,5 +168,37 @@ public class Main {
             }
         }
         return employeeList;
+    }
+
+    public static String readString(String fileName) {
+
+        String line;
+        StringBuilder result = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
+            while ((line = reader.readLine()) != null) {
+                result.append(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return result.toString();
+    }
+
+    public static List<Employee> jsonToList(String json) {
+        List<Employee> jtl = new ArrayList<>();
+        try {
+            JSONParser parser = new JSONParser();
+            JSONArray array = (JSONArray) parser.parse(json);
+            GsonBuilder builder3 = new GsonBuilder();
+            Gson gson = builder3.create();
+            for (int i = 0; i < array.size(); i++) {
+                String st = gson.toJson(array.get(i));
+                Employee e = gson.fromJson(st, Employee.class);
+                jtl.add(e);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return jtl;
     }
 }
